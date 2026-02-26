@@ -15,6 +15,9 @@ const ManagerDashboard = () => {
 
     // My leave form
     const [leaveForm, setLeaveForm] = useState({ startDate: '', endDate: '', reason: '' });
+
+    // My reimbursement form
+    const [reimbForm, setReimbForm] = useState({ amount: '', category: 'Travel', description: '', receiptUrl: '' });
     const { user } = useAuth();
 
     const [loading, setLoading] = useState(true);
@@ -110,6 +113,21 @@ const ManagerDashboard = () => {
         }
     };
 
+    const handleReimbSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await axiosInstance.post('/reimbursements', reimbForm);
+            setReimbForm({ amount: '', category: 'Travel', description: '', receiptUrl: '' });
+            setSuccessMessage('Reimbursement claim submitted successfully.');
+            setTimeout(() => setSuccessMessage(null), 3000);
+            setActiveTab('myReimbursements');
+            fetchData();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error submitting claim');
+            setTimeout(() => setError(null), 3000);
+        }
+    };
+
     if (loading) return <div className="spinner"></div>;
 
     // derived stats
@@ -129,6 +147,7 @@ const ManagerDashboard = () => {
     }).length;
 
     const myLeaves = leaves.filter(l => l.employee?._id === user._id);
+    const myReimbursements = reimbursements.filter(r => r.employee?._id === user._id);
 
     // Charts Data
     const leaveStatusCount = leaves.reduce((acc, l) => {
@@ -164,6 +183,7 @@ const ManagerDashboard = () => {
                     <li onClick={() => setActiveTab('overview')} style={{ cursor: 'pointer', color: activeTab === 'overview' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'overview' ? '600' : 'normal' }}>Dashboard Overview</li>
                     <li onClick={() => setActiveTab('team')} style={{ cursor: 'pointer', color: activeTab === 'team' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'team' ? '600' : 'normal' }}>My Team</li>
                     <li onClick={() => setActiveTab('myLeaves')} style={{ cursor: 'pointer', color: activeTab === 'myLeaves' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'myLeaves' ? '600' : 'normal' }}>My Leaves</li>
+                    <li onClick={() => setActiveTab('myReimbursements')} style={{ cursor: 'pointer', color: activeTab === 'myReimbursements' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'myReimbursements' ? '600' : 'normal' }}>My Claims</li>
                 </ul>
             </aside>
 
@@ -171,7 +191,10 @@ const ManagerDashboard = () => {
             <div className="dashboard-content">
                 <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
                     <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>Manager Interface</h2>
-                    <button onClick={() => setActiveTab('applyLeave')} className="btn btn-primary" style={{ boxShadow: '0 0 15px rgba(59,130,246,0.3)' }}>+ Apply for Leave</button>
+                    <div className="flex gap-4">
+                        <button onClick={() => setActiveTab('applyLeave')} className="btn btn-primary" style={{ boxShadow: '0 0 15px rgba(59,130,246,0.3)' }}>+ Apply for Leave</button>
+                        <button onClick={() => setActiveTab('applyReimbursement')} className="btn btn-primary" style={{ boxShadow: '0 0 15px rgba(59,130,246,0.3)' }}>+ Claim Expense</button>
+                    </div>
                 </div>
 
                 {error && <div className="mb-4" style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}>{error}</div>}
@@ -450,6 +473,67 @@ const ManagerDashboard = () => {
                                 <textarea required value={leaveForm.reason} onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })} rows="3"></textarea>
                             </div>
                             <button type="submit" className="btn btn-primary w-full">Submit Request</button>
+                        </form>
+                    </div>
+                )}
+
+                {activeTab === 'myReimbursements' && (
+                    <div className="card" style={{ padding: '0' }}>
+                        <h3 style={{ padding: '1.5rem 1.5rem 0' }}>My Claim History</h3>
+                        <div className="table-container" style={{ border: 'none', borderRadius: '0', background: 'transparent' }}>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {myReimbursements.map((r) => (
+                                        <tr key={r._id}>
+                                            <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                                            <td>{r.category}</td>
+                                            <td>${r.amount}</td>
+                                            <td>
+                                                <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {myReimbursements.length === 0 && <tr><td colSpan="4" className="text-center">No claims found.</td></tr>}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'applyReimbursement' && (
+                    <div className="card" style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+                        <h3 className="mb-4">Submit Reimbursement Claim</h3>
+                        <form onSubmit={handleReimbSubmit}>
+                            <div className="form-group mb-2">
+                                <label>Amount ($)</label>
+                                <input type="number" step="0.01" required value={reimbForm.amount} onChange={(e) => setReimbForm({ ...reimbForm, amount: e.target.value })} />
+                            </div>
+                            <div className="form-group mb-2">
+                                <label>Category</label>
+                                <select required value={reimbForm.category} onChange={(e) => setReimbForm({ ...reimbForm, category: e.target.value })}>
+                                    <option value="Travel">Travel</option>
+                                    <option value="Meals">Meals</option>
+                                    <option value="Supplies">Supplies</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div className="form-group mb-2">
+                                <label>Description</label>
+                                <textarea required value={reimbForm.description} onChange={(e) => setReimbForm({ ...reimbForm, description: e.target.value })} rows="2"></textarea>
+                            </div>
+                            <div className="form-group mb-4">
+                                <label>Receipt URL (Optional)</label>
+                                <input type="url" value={reimbForm.receiptUrl} onChange={(e) => setReimbForm({ ...reimbForm, receiptUrl: e.target.value })} placeholder="https://..." />
+                            </div>
+                            <button type="submit" className="btn btn-primary w-full">Submit Claim</button>
                         </form>
                     </div>
                 )}

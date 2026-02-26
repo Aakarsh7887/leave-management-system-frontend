@@ -6,7 +6,8 @@ const AdminDashboard = () => {
     const [userRequests, setUserRequests] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
     const [allLeaves, setAllLeaves] = useState([]);
-    const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'userRequests', 'users', 'leaves'
+    const [allReimbursements, setAllReimbursements] = useState([]);
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'userRequests', 'users', 'leaves', 'reimbursements'
     const [newUserForm, setNewUserForm] = useState({ name: '', email: '', password: '', role: 'Employee' });
     const [successMessage, setSuccessMessage] = useState(null);
 
@@ -32,6 +33,7 @@ const AdminDashboard = () => {
             setUserRequests(requestsRes.data);
             setAllUsers(usersRes.data);
             setAllLeaves(leavesRes.data);
+            setAllReimbursements(reimbRes.data);
 
             setStats({
                 totalUsers: usersRes.data.length,
@@ -83,6 +85,15 @@ const AdminDashboard = () => {
         }
     };
 
+    const updateReimbStatus = async (id, status) => {
+        try {
+            await axiosInstance.put(`/reimbursements/${id}/status`, { status });
+            fetchData();
+        } catch (err) {
+            setError('Error updating claim status');
+        }
+    };
+
     if (loading) return <div className="spinner"></div>;
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
@@ -104,6 +115,7 @@ const AdminDashboard = () => {
                     <li onClick={() => setActiveTab('users')} style={{ cursor: 'pointer', color: activeTab === 'users' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'users' ? '600' : 'normal' }}>Manage Users</li>
                     <li onClick={() => setActiveTab('userRequests')} style={{ cursor: 'pointer', color: activeTab === 'userRequests' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'userRequests' ? '600' : 'normal' }}>User Requests</li>
                     <li onClick={() => setActiveTab('leaves')} style={{ cursor: 'pointer', color: activeTab === 'leaves' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'leaves' ? '600' : 'normal' }}>Leaves Management</li>
+                    <li onClick={() => setActiveTab('reimbursements')} style={{ cursor: 'pointer', color: activeTab === 'reimbursements' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'reimbursements' ? '600' : 'normal' }}>Reimbursements Management</li>
                 </ul>
             </aside>
 
@@ -315,6 +327,60 @@ const AdminDashboard = () => {
                                             </tr>
                                         ))}
                                         {allLeaves.length === 0 && <tr><td colSpan="5" className="text-center">No leave requests found.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'reimbursements' && (
+                    <div>
+                        <h3 className="mb-3">All Reimbursement Claims</h3>
+                        <div className="card" style={{ padding: '0' }}>
+                            <div className="table-container" style={{ border: 'none', borderRadius: '0', background: 'transparent' }}>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th>Category</th>
+                                            <th>Amount</th>
+                                            <th>Description</th>
+                                            <th>Receipt</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {allReimbursements.map((r) => (
+                                            <tr key={r._id}>
+                                                <td>
+                                                    <div><strong>{r.employee?.name}</strong></div>
+                                                </td>
+                                                <td>{r.category}</td>
+                                                <td>${r.amount}</td>
+                                                <td>{r.description}</td>
+                                                <td>
+                                                    {r.receiptUrl ? (
+                                                        <a href={r.receiptUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>View</a>
+                                                    ) : 'None'}
+                                                </td>
+                                                <td>
+                                                    <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span>
+                                                </td>
+                                                <td>
+                                                    {r.status === 'Pending' ? (
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => updateReimbStatus(r._id, 'Approved')} className="btn btn-success" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Approve</button>
+                                                            <button onClick={() => updateReimbStatus(r._id, 'Rejected')} className="btn btn-danger" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Reject</button>
+                                                        </div>
+                                                    ) : (
+                                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Processed</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {allReimbursements.length === 0 && <tr><td colSpan="7" className="text-center">No reimbursement claims found.</td></tr>}
                                     </tbody>
                                 </table>
                             </div>

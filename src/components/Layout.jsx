@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+
+    // Theme toggle state
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+    useEffect(() => {
+        if (theme === 'light') {
+            document.body.classList.add('light-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.body.classList.remove('light-theme');
+            localStorage.setItem('theme', 'dark');
+        }
+    }, [theme]);
 
     const handleLogout = () => {
         logout();
@@ -18,6 +31,14 @@ const Layout = () => {
                     <Link to="/">LMS & Reimbursements</Link>
                 </div>
                 <div className="nav-links">
+                    <button
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        className="btn btn-outline"
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', marginRight: '1rem', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                        title="Toggle Theme"
+                    >
+                        {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+                    </button>
                     {user ? (
                         <>
                             <span className="nav-link" style={{ cursor: 'default' }}>
