@@ -1,16 +1,77 @@
-# React + Vite
+# Employee Leave Management & Reimbursement System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A complete MERN stack application featuring Role-Based Access Control (RBAC), allowing Employees to request leaves and submit reimbursement claims, which Managers or Admins can then review and approve/reject.
 
-Currently, two official plugins are available:
+## Features
+- **Authentication & Authorization**: Secure JWT-based auth with roles (Admin, Manager, Employee).
+- **Leave Management**: Employees apply for leave, Managers approve/reject.
+- **Reimbursement Module**: Submit expenses with URLs to receipts; Managers review.
+- **Premium UI**: Handcrafted, fully responsive, glassmorphism-inspired dark mode using pure CSS (no Tailwind).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
+- **Frontend**: React.js (Vite), React Router v6, Axios, Context API, CSS3.
+- **Backend**: Node.js, Express.js, MongoDB (Mongoose), JWT, bcryptjs.
 
-## React Compiler
+## Project Structure
+```
+/backend
+  /config         # Database connections
+  /controllers    # Business logic functions
+  /middleware     # JWT Auth and Error handling
+  /models         # MongoDB Schemas
+  /routes         # API endpoint definitions
+  /utils          # Helper functions (e.g. tokenizer)
+  server.js       # Entry point
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+/frontend
+  /src
+    /components   # UI Layouts & Dashboards
+    /context      # React Context (Auth)
+    /pages        # Top-level route pages (Login, Register, etc.)
+    /utils        # Interceptors & Configs (Axios)
+    App.jsx       # Main routing tree
+    index.css     # Global aesthetic styling
+```
 
-## Expanding the ESLint configuration
+## Setup & Installation
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+- Node.js installed (v16+)
+- MongoDB connection string (Local or MongoDB Atlas)
+
+### 1. Database Configuration
+1. Navigate to the `backend/` directory.
+2. Create a `.env` file in `backend/` and add the following:
+   ```env
+   PORT=5000
+   NODE_ENV=development
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_super_secret_jwt_key_here
+   ```
+
+### 2. Backend Setup
+1. Open a terminal to the `backend/` directory:
+   ```bash
+   cd backend
+   npm install
+   npm run dev
+   ```
+2. The server should start on `http://localhost:5000` assuming database connection succeeds.
+
+### 3. Frontend Setup
+1. Open a separate terminal to the `frontend/` directory:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+2. The React app will be served via Vite (usually on `http://localhost:5173`). Vite is configured to proxy `/api` requests to `localhost:5000`.
+
+## Usage
+1. Open the frontend URL in your browser.
+2. Register a new user. You can select the Role during registration (Employee, Manager, Admin).
+3. **Employee Flow**: Login -> Dashboard. You will see forms to submit Leave and Claims. Your history appears beneath the forms.
+4. **Manager Flow**: Login -> Dashboard. You will see a combined list of all pending Leave Requests and Reimbursements, with actionable Approve/Reject buttons.
+
+## Important Note
+For actual production deployment, remove the role-selection from the registration form and assign roles strictly through secure Admin panels. This role-picker is included merely for easy demonstration purposes.
